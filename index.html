@@ -1,0 +1,437 @@
+Project Python Foundations: FoodHub Data Analysis
+Context
+The number of restaurants in New York is increasing day by day. Lots of students and busy professionals rely on those restaurants due to their hectic lifestyles. Online food delivery service is a great option for them. It provides them with good food from their favorite restaurants. A food aggregator company FoodHub offers access to multiple restaurants through a single smartphone app.
+
+The app allows the restaurants to receive a direct online order from a customer. The app assigns a delivery person from the company to pick up the order after it is confirmed by the restaurant. The delivery person then uses the map to reach the restaurant and waits for the food package. Once the food package is handed over to the delivery person, he/she confirms the pick-up in the app and travels to the customer's location to deliver the food. The delivery person confirms the drop-off in the app after delivering the food package to the customer. The customer can rate the order in the app. The food aggregator earns money by collecting a fixed margin of the delivery order from the restaurants.
+
+Objective
+The food aggregator company has stored the data of the different orders made by the registered customers in their online portal. They want to analyze the data to get a fair idea about the demand of different restaurants which will help them in enhancing their customer experience. Suppose you are hired as a Data Scientist in this company and the Data Science team has shared some of the key questions that need to be answered. Perform the data analysis to find answers to these questions that will help the company to improve the business.
+
+Data Description
+The data contains the different data related to a food order. The detailed data dictionary is given below.
+
+Data Dictionary
+order_id: Unique ID of the order
+customer_id: ID of the customer who ordered the food
+restaurant_name: Name of the restaurant
+cuisine_type: Cuisine ordered by the customer
+cost_of_the_order: Cost of the order
+day_of_the_week: Indicates whether the order is placed on a weekday or weekend (The weekday is from Monday to Friday and the weekend is Saturday and Sunday)
+rating: Rating given by the customer out of 5
+food_preparation_time: Time (in minutes) taken by the restaurant to prepare the food. This is calculated by taking the difference between the timestamps of the restaurant's order confirmation and the delivery person's pick-up confirmation.
+delivery_time: Time (in minutes) taken by the delivery person to deliver the food package. This is calculated by taking the difference between the timestamps of the delivery person's pick-up confirmation and drop-off information
+Let us start by importing the required libraries
+# Installing the libraries with the specified version.
+!pip install numpy>=1.26
+!pip install pandas==2.2.2
+!pip install matplotlib>=3.8.0
+Requirement already satisfied: pandas==2.2.2 in /usr/local/lib/python3.11/dist-packages (2.2.2)
+Requirement already satisfied: numpy>=1.23.2 in /usr/local/lib/python3.11/dist-packages (from pandas==2.2.2) (2.0.2)
+Requirement already satisfied: python-dateutil>=2.8.2 in /usr/local/lib/python3.11/dist-packages (from pandas==2.2.2) (2.8.2)
+Requirement already satisfied: pytz>=2020.1 in /usr/local/lib/python3.11/dist-packages (from pandas==2.2.2) (2025.1)
+Requirement already satisfied: tzdata>=2022.7 in /usr/local/lib/python3.11/dist-packages (from pandas==2.2.2) (2025.1)
+Requirement already satisfied: six>=1.5 in /usr/local/lib/python3.11/dist-packages (from python-dateutil>=2.8.2->pandas==2.2.2) (1.17.0)
+Note: After running the above cell, kindly restart the notebook kernel and run all cells sequentially from the start again.
+
+# import libraries for data manipulation
+import numpy as np
+import pandas as pd
+
+# import libraries for data visualization
+import matplotlib.pyplot as plt
+import seaborn as sns
+Understanding the structure of the data
+# uncomment and run the following lines for Google Colab
+from google.colab import drive
+drive.mount('/content/drive')
+Mounted at /content/drive
+# Write your code here to read the data
+df = pd.read_csv('/content/drive/MyDrive/foodhub_order.csv')
+# Write your code here to view the first 5 rows
+df.head()
+order_id	customer_id	restaurant_name	cuisine_type	cost_of_the_order	day_of_the_week	rating	food_preparation_time	delivery_time
+0	1477147	337525	Hangawi	Korean	30.75	Weekend	Not given	25	20
+1	1477685	358141	Blue Ribbon Sushi Izakaya	Japanese	12.08	Weekend	Not given	25	23
+2	1477070	66393	Cafe Habana	Mexican	12.23	Weekday	5	23	28
+3	1477334	106968	Blue Ribbon Fried Chicken	American	29.20	Weekend	3	25	15
+4	1478249	76942	Dirty Bird to Go	American	11.59	Weekday	4	25	24
+Question 1: How many rows and columns are present in the data? [0.5 mark]
+# Assuming df is your DataFrame
+rows, columns = df.shape
+
+# Output the number of rows and columns
+print(f'The data has {rows} rows and {columns} columns.')
+The data has 1898 rows and 9 columns.
+Observations: There should be enough data in our dataset for us to glean some insights and perform some basic statistical analysis.
+Question 2: What are the datatypes of the different columns in the dataset? (The info() function can be used) [0.5 mark]
+df.info()
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 1898 entries, 0 to 1897
+Data columns (total 9 columns):
+ #   Column                 Non-Null Count  Dtype  
+---  ------                 --------------  -----  
+ 0   order_id               1898 non-null   int64  
+ 1   customer_id            1898 non-null   int64  
+ 2   restaurant_name        1898 non-null   object 
+ 3   cuisine_type           1898 non-null   object 
+ 4   cost_of_the_order      1898 non-null   float64
+ 5   day_of_the_week        1898 non-null   object 
+ 6   rating                 1898 non-null   object 
+ 7   food_preparation_time  1898 non-null   int64  
+ 8   delivery_time          1898 non-null   int64  
+dtypes: float64(1), int64(4), object(4)
+memory usage: 133.6+ KB
+Observations: Our dataset contains 4 categorical and 5 numerical variables (9 columns total)
+Question 3: Are there any missing values in the data? If yes, treat them using an appropriate method. [1 mark]
+# Replace 'Not given' in 'rating' column with NaN
+df['rating'] = df['rating'].replace("Not given", np.nan)
+
+# Replace 'Not given' with NaN in the rating column
+df['rating'] = df['rating'].replace("Not given", np.nan)
+
+# Convert the rating column to numeric
+df['rating'] = pd.to_numeric(df['rating'])
+
+# Print number of missing values before treatment
+print("Missing values in each column:\n", df.isnull().sum())
+
+# Fill missing values using mode without chained assignment
+mode_rating = df['rating'].mode()[0]
+df['rating'] = df['rating'].fillna(mode_rating)
+
+# Confirm all missing values have been treated
+print("\nMissing values after treatment:\n", df.isnull().sum())
+Missing values in each column:
+ order_id                   0
+customer_id                0
+restaurant_name            0
+cuisine_type               0
+cost_of_the_order          0
+day_of_the_week            0
+rating                   736
+food_preparation_time      0
+delivery_time              0
+dtype: int64
+
+Missing values after treatment:
+ order_id                 0
+customer_id              0
+restaurant_name          0
+cuisine_type             0
+cost_of_the_order        0
+day_of_the_week          0
+rating                   0
+food_preparation_time    0
+delivery_time            0
+dtype: int64
+Observations: There were 736 "not given" responses for the rating variable. I replaced the missing responses with the mode for the variable. Although I treated the missing observations by adding the mode response in their place, the rating variable is likely to be less reliable than others becuase roughly 38% of its acutal values were missing.
+Question 4: Check the statistical summary of the data. What is the minimum, average, and maximum time it takes for food to be prepared once an order is placed? [2 marks]
+# Get the statistical summary
+summary = df['food_preparation_time'].describe()
+
+# Extract the required statistics
+minimum_time = summary['min']
+average_time = summary['mean']
+maximum_time = summary['max']
+
+# Print the results
+print(f"Minimum preparation time: {minimum_time} minutes")
+print(f"Average preparation time: {average_time} minutes")
+print(f"Maximum preparation time: {maximum_time} minutes")
+Minimum preparation time: 20.0 minutes
+Average preparation time: 27.371970495258168 minutes
+Maximum preparation time: 35.0 minutes
+Observations: Variance is low. No obvious outliers looking at this output.
+Question 5: How many orders are not rated? [1 mark]
+# Replace 'Not given' in 'rating' column with NaN
+df['rating'] = df['rating'].replace("Not given", np.nan)
+
+# Replace 'Not given' with NaN in the rating column
+df['rating'] = df['rating'].replace("Not given", np.nan)
+
+# Convert the rating column to numeric
+df['rating'] = pd.to_numeric(df['rating'])
+
+# Print number of missing values before treatment
+print("Missing values in each column:\n", df.isnull().sum())
+
+# Fill missing values using mode without chained assignment
+mode_rating = df['rating'].mode()[0]
+df['rating'] = df['rating'].fillna(mode_rating)
+
+# Confirm all missing values have been treated
+print("\nMissing values after treatment:\n", df.isnull().sum())
+Missing values in each column:
+ order_id                 0
+customer_id              0
+restaurant_name          0
+cuisine_type             0
+cost_of_the_order        0
+day_of_the_week          0
+rating                   0
+food_preparation_time    0
+delivery_time            0
+dtype: int64
+
+Missing values after treatment:
+ order_id                 0
+customer_id              0
+restaurant_name          0
+cuisine_type             0
+cost_of_the_order        0
+day_of_the_week          0
+rating                   0
+food_preparation_time    0
+delivery_time            0
+dtype: int64
+:#### Observations: As stated in question 3, there were 736 missing ratings. I treated the missing data as instructed above, thus the output directly above says there's currently no missing data. However, the rating variable is likely to be less reliable than others in our dataset becuase roughly 38% of its acutal values were missing.
+
+Exploratory Data Analysis (EDA)
+Univariate Analysis
+Question 6: Explore all the variables and provide observations on their distributions. (Generally, histograms, boxplots, countplots, etc. are used for univariate exploration.) [9 marks]
+# Histogram for distribution of order cost
+df['cost_of_the_order'].hist(bins=20, edgecolor='k')
+plt.title('Distribution of Order Cost')
+plt.xlabel('Cost_of_the_order')
+plt.ylabel('Frequency')
+plt.show()
+
+# Boxplot of food preparation time
+df.boxplot(column='food_preparation_time')
+plt.title('Boxplot of Food Preparation Time')
+plt.ylabel('Minutes')
+plt.show()
+
+# Box plot for delivery_time
+plt.figure(figsize=(10, 5))
+plt.boxplot(df['delivery_time'], vert=False)
+plt.title('Box Plot of Delivery Time')
+plt.xlabel('Delivery Time (minutes)')
+plt.grid(True)
+plt.show()
+
+# Countplot for cuisine type
+sns.countplot(data=df, x='cuisine_type')
+plt.title('Count of Cuisine Types')
+plt.xticks(rotation=45)
+plt.show()
+
+
+
+
+Observations: The distribution for the price of the orders is shown to be skewed right in the histogram above. The majority of orders were between 10 and 15 dollars.
+The boxplot for food_preparation_time shows a median preparation time of 27 minutes with an interquartile range (IQR) of roughly 23 to 32 minutes. The whiskers for the boxplot extend from around 20 to 35 minutes. This suggests a tight distribution of foord preparation times with no significant outliers.
+The box plot for the delivery_time variable shows that the median delivery time is approximately 25 minutes, indicating that half of the orders are delivered within this timeframe. The interquartile range (IQR) spans roughly from 20 to 35 minutes, meaning most delivery times fall within this range. There are no significant outliers observed beyond the whiskers, suggesting that the delivery times are fairly consistent without any extreme delays. The distribution appears moderately spread but without any unusual variability, indicating a generally stable and efficient delivery process.
+The countplot for cuisine_type shows American as the most poluar with almost 600 orders, which represents almost a thrid of the total orders. Japanese is in second with around 475 orders, Itlian is third with close to 300, and Mediterranean is in fourth with around 200 orders. Roughly 1575 orders representing approximately 83 percent of the total orders come from these four types of cuisine. All of the other types of cuisines fail to pass even 100 orders. This shows the orders are primarily concentrated among four types of cuisine.
+Question 7: Which are the top 5 restaurants in terms of the number of orders received? [1 mark]
+# Group by restaurant_name and count the number of orders
+restaurant_orders = df.groupby('restaurant_name')['order_id'].count()
+
+# Sort the counts in descending order and select the top 5
+top_5_restaurants = restaurant_orders.sort_values(ascending=False).head(5)
+
+# Print the top 5 restaurants with their order counts
+print(top_5_restaurants)
+restaurant_name
+Shake Shack                  219
+The Meatball Shop            132
+Blue Ribbon Sushi            119
+Blue Ribbon Fried Chicken     96
+Parm                          68
+Name: order_id, dtype: int64
+Observations: Shake Shack is the most ordered restaurant by far. Blue Ribbon has two resturants in the top 5 indicating it's potentially a strong brand in the area.
+Question 8: Which is the most popular cuisine on weekends? [1 mark]
+# Filter the data for weekend orders
+weekend_data = df[df['day_of_the_week'].isin(['Weekend'])]
+
+# Check if weekend_data is empty
+if weekend_data.empty:
+    print("No orders found on weekends.")
+else:
+    # Count the occurrences of each cuisine type on weekends
+    cuisine_counts = weekend_data['cuisine_type'].value_counts()
+
+    # Identify the most popular cuisine
+    most_popular_cuisine = cuisine_counts.idxmax()
+    most_popular_count = cuisine_counts.max()
+
+    # Print the result
+    print(f"The most popular cuisine on weekends is {most_popular_cuisine} with {most_popular_count} orders.")
+The most popular cuisine on weekends is American with 415 orders.
+Observations: The most popular cuisine on weekends is American with 415 orders. This is also the most popular cuisine overall with almost 600 orders. The 415 weekend orders represents over two thirds of the 600 total orders for the most popular cuisine. The 415 weekend orders of American cuisine represent roughly twenty two percent of all of the orders placed.
+Question 9: What percentage of the orders cost more than 20 dollars? [2 marks]
+# Calculate the percentage of orders that cost more than $20
+high_cost_orders = df[df['cost_of_the_order'] > 20]  # Filter orders above $20
+percentage_high_cost = (len(high_cost_orders) / len(df)) * 100  # Compute percentage
+
+print(f"Percentage of orders costing more than $20: {percentage_high_cost:.2f}%")
+Percentage of orders costing more than $20: 29.24%
+Observations: Under 30 percent of the orders are over 20 dollars. How might such low order prices on roughy 70 percent of FoodHub's orders be effecting the bottom line of the company? The problem statement says 'the food aggregator earns money by collecting a fixed margin of the delivery order from the restaurant.' It doesn't say exactly what the margin FoodHub earns on each order is. It's definitely possible that this is seriously limiting the company's ability to generate revenue.
+Question 10: What is the mean order delivery time? [1 mark]
+# Calculate the mean (average) delivery time
+mean_delivery_time = df['delivery_time'].mean()
+
+print(f"Mean delivery time: {mean_delivery_time:.2f} minutes")
+Mean delivery time: 24.16 minutes
+Observations: A mean time of about 24 minutes appears to show that the delivery service is efficient.
+Question 11: The company has decided to give 20% discount vouchers to the top 3 most frequent customers. Find the IDs of these customers and the number of orders they placed. [1 mark]
+# Identify the top 3 most frequent customers based on order count
+top_customers = df['customer_id'].value_counts().head(3)
+
+# Extract the top 3 customer IDs
+top_customer_ids = top_customers.index.tolist()
+
+# Filter the dataset for only these top customers
+top_customers_data = df[df['customer_id'].isin(top_customer_ids)]
+
+# Calculate the average order cost for each top customer
+avg_order_cost_per_customer = top_customers_data.groupby('customer_id')['cost_of_the_order'].mean()
+
+# Find the most frequently ordered restaurants for each top customer
+top_restaurants_per_customer = top_customers_data.groupby('customer_id')['restaurant_name'].agg(lambda x: x.value_counts().idxmax())
+
+# Combine results into a DataFrame for easy viewing
+top_customers_analysis = pd.DataFrame({
+    'Average Order Cost': avg_order_cost_per_customer,
+    'Most Ordered Restaurant': top_restaurants_per_customer
+})
+
+# Print the results
+print("Top 3 Customers Analysis:\n")
+print(top_customers_analysis)
+Top 3 Customers Analysis:
+
+             Average Order Cost    Most Ordered Restaurant
+customer_id                                               
+47440                 15.818000                 Bareburger
+52832                 17.369231                 Donburi-ya
+83287                 15.478889  Blue Ribbon Sushi Izakaya
+Observations: The top three most frequent customers are listed above. The average price for all of their orders is significantly below 20 dollars. Does it make sense to offer 20 percent off of such low orders?
+Multivariate Analysis
+Question 12: Perform a multivariate analysis to explore relationships between the important variables in the dataset. (It is a good idea to explore relations between numerical variables as well as relations between numerical and categorical variables) [10 marks]
+# Pairplot of Numerical Variables
+# =============================
+numerical_vars = ['cost_of_the_order', 'food_preparation_time', 'delivery_time', 'rating']
+
+# Drop rows with missing numerical data for pairplot
+sns.pairplot(df[numerical_vars].dropna())
+plt.suptitle("Pairplot of Numerical Variables", y=1.02)
+plt.show()
+
+# Correlation Matrix Heatmap
+corr = df[numerical_vars].corr()
+
+plt.figure(figsize=(8, 6))
+sns.heatmap(corr, annot=True, cmap='coolwarm', fmt=".2f")
+plt.title("Correlation Matrix of Numerical Variables")
+plt.show()
+
+# Boxplot: Cost of Order by Cuisine Type
+plt.figure(figsize=(12, 6))
+sns.boxplot(x='cuisine_type', y='cost_of_the_order', data=df)
+plt.xticks(rotation=45)
+plt.title("Cost of Order by Cuisine Type")
+plt.tight_layout()
+plt.show()
+
+# Boxplot: Food Preparation Time by Cuisine Type
+plt.figure(figsize=(12, 6))
+sns.boxplot(x='cuisine_type', y='food_preparation_time', data=df)
+plt.xticks(rotation=45)
+plt.title("Food Preparation Time by Cuisine Type")
+plt.tight_layout()
+plt.show()
+
+
+
+
+Observations: Relationships between numerical variables appear to be weak or nonexistent. The pairplot shows that the variables are widely spread, indicating weak linear relationships. All values in the correlation matrix are close to zero, which implies very weak or no linear relationships.
+The categorical variable cuisine_type has a noticeable impact on both cost_of_the_order and food_preparation_time, making it a significant categorical variable for further analysis or modeling. The box plot illustrates the distribution of order costs across different cuisine types. It shows significant variability in the cost of orders depending on the cuisine. French, Middle Eastern, and Southern cuisines have higher median order costs compared to others, with several orders exceeding 30 dollars. In contrast, Korean and Vietnamese cuisines have lower median order costs, with most orders falling below 15 dollars. These differences suggest that cuisine type plays a role in how much customers are likely to spend per order. Southern, Thai, and Japanese foods show slightly higher preparation times, while Korean food has a relatively low and consistent prep time.
+Question 13: The company wants to provide a promotional offer in the advertisement of the restaurants. The condition to get the offer is that the restaurants must have a rating count of more than 50 and the average rating should be greater than 4. Find the restaurants fulfilling the criteria to get the promotional offer. [3 marks]
+# Group by restaurant and calculate rating count and average rating
+restaurant_stats = df.groupby('restaurant_name')['rating'].agg(
+    rating_count='count',
+    avg_rating='mean'
+).reset_index()
+
+# Filter restaurants that meet the promotional criteria
+promotional_restaurants = restaurant_stats[
+    (restaurant_stats['rating_count'] > 50) &
+    (restaurant_stats['avg_rating'] > 4)
+]
+
+# Display the results
+print("Restaurants eligible for promotional offers:")
+print(promotional_restaurants)
+Restaurants eligible for promotional offers:
+               restaurant_name  rating_count  avg_rating
+20   Blue Ribbon Fried Chicken            96    4.552083
+21           Blue Ribbon Sushi           119    4.521008
+109                       Parm            68    4.500000
+121           RedFarm Broadway            59    4.474576
+122             RedFarm Hudson            55    4.490909
+136                Shake Shack           219    4.561644
+153          The Meatball Shop           132    4.689394
+Observations: The restaurants fulfilling the criteria to get the promotional offer are listed above. Considering the average order is below twenty dollars, FoodHub should consider carefully how giving a promotional discount will effect its bottom line.
+Question 14: The company charges the restaurant 25% on the orders having cost greater than 20 dollars and 15% on the orders having cost greater than 5 dollars. Find the net revenue generated by the company across all orders. [3 marks]
+# Define a function to calculate commission for each order
+def calculate_commission(order_cost):
+    if order_cost > 20:
+        return order_cost * 0.25
+    elif order_cost > 5:
+        return order_cost * 0.15
+    else:
+        return 0
+
+# Apply the function to calculate commission for each order
+df['commission'] = df['cost_of_the_order'].apply(calculate_commission)
+
+# Calculate the total net revenue
+total_net_revenue = df['commission'].sum()
+
+print(f"Total net revenue generated by the company: ${total_net_revenue:.2f}")
+Total net revenue generated by the company: $6166.30
+Observations: The net revenue of 6,166.30 is approximately 3.25 per order on average (6,166.30/1898).
+Question 15: The company wants to analyze the total time required to deliver the food. What percentage of orders take more than 60 minutes to get delivered from the time the order is placed? (The food has to be prepared and then delivered.) [2 marks]
+# Calculate the total time for each order
+df['total_time'] = df['food_preparation_time'] + df['delivery_time']
+
+# Count the number of orders exceeding 60 minutes
+orders_over_60 = df[df['total_time'] > 60].shape[0]
+
+# Calculate the total number of orders
+total_orders = df.shape[0]
+
+# Compute the percentage of orders taking more than 60 minutes
+percentage_over_60 = (orders_over_60 / total_orders) * 100
+
+print(f"Percentage of orders taking more than 60 minutes: {percentage_over_60:.2f}%")
+Percentage of orders taking more than 60 minutes: 10.54%
+Observations:The percentage of orders that take more than 60 minutes to get delivered from the time the order is placed is 10.54 percent. A delivery time of less than 60 minutes for almost 90 percent of orders means customers will generally receive their food in less than one hour using the service.
+Question 16: The company wants to analyze the delivery time of the orders on weekdays and weekends. How does the mean delivery time vary during weekdays and weekends? [2 marks]
+# Group by day_of_the_week and calculate mean delivery time
+mean_delivery_time = df.groupby('day_of_the_week')['delivery_time'].mean().reset_index()
+
+# Rename columns for clarity
+mean_delivery_time.columns = ['Day Type', 'Average Delivery Time (minutes)']
+
+# Display the result
+print(mean_delivery_time)
+  Day Type  Average Delivery Time (minutes)
+0  Weekday                        28.340037
+1  Weekend                        22.470022
+Observations: The mean delivery time is roughly six minutes faster on weekends than it is on weekdays. This isn't a substantial difference indicating relatively stable delivery time on weekends and weekdays.
+Conclusion and Recommendations
+Question 17: What are your conclusions from the analysis? What recommendations would you like to share to help improve the business? (You can use cuisine type and feedback ratings to drive your business recommendations.) [6 marks]
+Conclusions:
+*A lot of infomration is missing for the rating variable.
+*The time it takes from a customer placing an order to receiving their food is a strength of the service. The median food_preparation_time of 27 minutes and median delivery_time of approximately 25 minutes with no significant outliers for either variable means food is generally delivered to the customer within an hour. The mean delivery time is roughly six minutes faster on weekends than it is on weekdays. This isn't a substantial difference indicating relatively stable delivery time on weekends and weekdays.
+*Shake Shack is the most ordered restaurant by far. Blue Ribbon has two resturants in the top 5 indicating it's potentially a strong brand in the area.
+*The most popular cuisine on weekends is American with 415 orders. This is also the most popular cuisine overall with almost 600 orders. The 415 weekend orders represents over two thirds of the 600 total orders for the most popular cuisine. The 415 weekend orders of American cuisine represent roughly twenty two percent of all of the orders placed.
+*Under 30 percent of the orders are over 20 dollars. The net revenue of 6,166.30 is approximately 3.25 per order on average (6,166.30/1898).
+*Relationships between numerical variables appear to be weak or nonexistent. The pairplot shows that the variables are widely spread, indicating weak linear relationships. All values in the correlation matrix are close to zero, which implies very weak or no linear relationships.
+The categorical variable cuisine_type has a noticeable impact on both cost_of_the_order and food_preparation_time, making it a significant categorical variable for further analysis or modeling. French, Middle Eastern, and Southern cuisines have higher median order costs compared to others, with several orders exceeding 30 dollars. In contrast, Korean and Vietnamese cuisines have lower median order costs, with most orders falling below 15 dollars. These differences suggest that cuisine type plays a role in how much customers are likely to spend per order. Southern, Thai, and Japanese foods show slightly higher preparation times, while Korean food has a relatively low and consistent prep time.
+Recommendations:
+*Improve the process for requesting ratings. WIth roughly 38 percent of customers not responding with a rating it will be hard to effectively evaluate the service. Is the process too time consuming or complex? Can it be simplified? What happens if a customer doesn't respond to a rating request? Are they asked again/reminded? Is it possible to ask customers to customers more than once if we're not already? Is the one to five star rating system really capturing the information needed to evaluate the service? This system may tell us if a customer really liked or disliked their overall experience. However, it doesn't tell us what they really liked or disliked about it. Capturing specific data for this variable is essential to evaluating figuring out what areas of the service are providing value to the customers and what parts could be improved to create more value for them.
+*How might such low order prices on roughly 70 percent of FoodHub's orders be affecting the company's bottom line? The average price of the orders from the top three most frequent customers is significantly below 20 dollars. Does it make sense to offer targeted promotions encouraging these customers to place larger orders, possibly steering them toward menu items or combinations that have a greater profit margin for FoodHub? Consider a minimum order for service. Does it make sense to have a minimum order in place? According to question 14 "The company charges the restaurant 25% on the orders having cost greater than 20 dollars and 15% on the orders having cost greater than 5 dollars. Find the net revenue generated by the company across all orders." That means on an order of 30 dollars FoodHub makes approximately 7.50. Is it worth it for the company to provide service for any less of a margin than this? How likely are customers to pay the additional money for the convenience of having their food delivered?
+*The categorical variable cuisine_type has a noticeable impact on cost_of_the_order. Consider expanding the selection of restaurants serving the types of cuisine with higher order costs and dropping the ones with lower order costs. Although food_preparation_time may increase with these cuisines, the analysis shows it's not signficant enough to prohibit the service from focusing on the more expensive cuisine types.
